@@ -1,4 +1,4 @@
-#ifndef DATA_TYPES_H_
+s#ifndef DATA_TYPES_H_
 #define DATA_TYPES_H_
 
 
@@ -22,7 +22,7 @@ typedef struct{
 	char data[MAXLINE];
 	int flag;
 	struct timespec tstart;
-}Header;
+}Pkt_head;
 
 
 struct msgbuf{
@@ -33,7 +33,7 @@ struct msgbuf{
 
 
 typedef struct circ_buff{
-	Header *win;
+	Pkt_head *win;
 	pthread_mutex_t mtx;
 	int end;
 	int S,E;
