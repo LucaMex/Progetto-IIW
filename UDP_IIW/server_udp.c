@@ -17,7 +17,7 @@ void sighandler(int sign)
 	(void)sign;
 	int status;
 	pid_t pid;
-
+	//Con flag WNOHANG-->il padre ritorna se non ci sono figli morti(non bloccante)
 	while ((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0)
 		;
 	return;
@@ -28,10 +28,12 @@ void sighandler(int sign)
 
 void handle_sigchild(struct sigaction* sa)
 {
+	//Riempio la struttura dati con i valori richiesti
+		//sighandler puntatore a funzione(==nome funzione)
     sa->sa_handler = sighandler;
     sa->sa_flags = SA_RESTART;
     sigemptyset(&sa->sa_mask);
-
+    //registro il sigaction
     if (sigaction(SIGCHLD, sa, NULL) == -1) {
         fprintf(stderr, "Error in sigaction()\n");
         exit(EXIT_FAILURE);
@@ -613,16 +615,24 @@ int main(int argc, char **argv)
 {
   (void) argc;
   (void) argv;
+
+  //socket ascolto server
   int sockfd;
+
   int sid;
+  //struttura dati per gestire informazioni client
   socklen_t len;
   struct sockaddr_in addr;
+  //Struttura dati per pkt
   Ptk_head p;
+  //Usato per gestire figli zombie -->struttura da riempire in sighchild
   struct sigaction sa;
 
 
-  handle_sigchild(&sa);					/*handle SIGHCLD to avoid zombie processes*/
+  //Gestisco figli zombie 
+  handle_sigchild(&sa);					
 
+  //Dimensione della finestra-->viene settata di default in un range 80-93(valori ottimali a livello di prestazioni)
   if(DIMWIN <= 0)
 	  n_win = 80;
   if(DIMWIN > 93)
@@ -630,7 +640,7 @@ int main(int argc, char **argv)
   else
 	  n_win = DIMWIN;
 
-
+  //Per vedere se il timeout impostato è adattativo o meno
   if(ADAPTATIVE != 1)
 	  adaptive = 0;
   else
