@@ -9,14 +9,14 @@
 
 
 
-int receive_packet(int sockfd,Header* p,struct sockaddr_in* servaddr)
+int receive_packet(int sockfd,Pkt_head* p,struct sockaddr_in* servaddr)
 {
 	struct sockaddr_in s = *servaddr;
 	socklen_t len = sizeof(s);
 	int n,attempts = 0;
 	for(;;){
 		start_socket_timeout(&sockfd,0);
-		n = recvfrom(sockfd,p,sizeof(Header),0,(struct sockaddr*)servaddr,&len);
+		n = recvfrom(sockfd,p,sizeof(Pkt_head),0,(struct sockaddr*)servaddr,&len);
 		if(n == -1){
 			if(errno == EWOULDBLOCK){
 				if(attempts == 10){
@@ -38,12 +38,12 @@ int receive_packet(int sockfd,Header* p,struct sockaddr_in* servaddr)
 }
 
 
-void send_packet(int sock_fd,struct sockaddr_in servaddr,Header* p,int probability)
+void send_packet(int sock_fd,struct sockaddr_in servaddr,Pkt_head* p,int probability)
 {
 	long x = rand()%100 + 1;
 
 	if(x>probability){
-		if(sendto(sock_fd,p,sizeof(Header), 0, (struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
+		if(sendto(sock_fd,p,sizeof(Pkt_head), 0, (struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
 			err_exit("sendto\n");
 	}
 }
@@ -52,25 +52,25 @@ void send_packet(int sock_fd,struct sockaddr_in servaddr,Header* p,int probabili
 
 
 
-void send_ack(int sockfd,Header p,struct sockaddr_in servaddr,int probability,int ack_seq)
+void send_ack(int sockfd,Pkt_head p,struct sockaddr_in servaddr,int probability,int ack_seq)
 {
 	p.n_seq = -1;
 	p.n_ack = ack_seq;
 	long x = rand()%100 + 1;
 	if(x > probability){
-		if(sendto(sockfd,&p,sizeof(Header),0,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
+		if(sendto(sockfd,&p,sizeof(Pkt_head),0,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
 			err_exit("sendto\n");
 	}
 }
 
 
-int receive_cmd_ack(int sockfd,Header* p,struct sockaddr_in* servaddr)
+int receive_cmd_ack(int sockfd,Pkt_head* p,struct sockaddr_in* servaddr)
 {
 	struct sockaddr_in s = *servaddr;
 	socklen_t len = sizeof(s);
 	int n,result = 0;
 	start_socket_timeout(&sockfd,0);
-	n = recvfrom(sockfd,p,sizeof(Header),0,(struct sockaddr*)servaddr,&len);
+	n = recvfrom(sockfd,p,sizeof(Pkt_head),0,(struct sockaddr*)servaddr,&len);
 	if(n == -1){
 		if(errno == EWOULDBLOCK){
 			result = 0;
@@ -86,14 +86,14 @@ int receive_cmd_ack(int sockfd,Header* p,struct sockaddr_in* servaddr)
 }
 
 
-int receive_command(int sockfd,char comm[],Header* r,struct sockaddr* servaddr)
+int receive_command(int sockfd,char comm[],Pkt_head* r,struct sockaddr* servaddr)
 {
 	struct sockaddr s = *servaddr;
 	socklen_t len = sizeof(s);
 	int j = 0,result = 0;
 
 	start_socket_timeout(&sockfd,0);
-    int n = recvfrom(sockfd, r, sizeof(Header), 0, (struct sockaddr *)servaddr, &len);
+    int n = recvfrom(sockfd, r, sizeof(Pkt_head), 0, (struct sockaddr *)servaddr, &len);
     if(n == -1){
     	if(errno == EWOULDBLOCK){
     		errno = 0;
@@ -114,9 +114,9 @@ int receive_command(int sockfd,char comm[],Header* r,struct sockaddr* servaddr)
 }
 
 
-int receive_ack(Window* w,int sockfd,struct sockaddr_in servaddr,Header* recv,int seq,char c,int existing)
+int receive_ack(Window* w,int sockfd,struct sockaddr_in servaddr,Pkt_head* recv,int seq,char c,int existing)
 {
-	Header send;
+	Pkt_head send;
 	int attempts = 0;
 	for(;;){
 		if(attempts == 10)
@@ -148,7 +148,7 @@ int receive_ack(Window* w,int sockfd,struct sockaddr_in servaddr,Header* recv,in
 
 
 
-int waiting(int sockfd,struct sockaddr_in servaddr,Header p,int expected_ack)
+int waiting(int sockfd,struct sockaddr_in servaddr,Pkt_head p,int expected_ack)
 {
 	int attempts = 0;
 	for(;;){
@@ -170,7 +170,7 @@ int waiting(int sockfd,struct sockaddr_in servaddr,Header p,int expected_ack)
 
 
 
-int wait_ack(int sockfd,struct sockaddr_in servaddr,Header p,int end_seq)
+int wait_ack(int sockfd,struct sockaddr_in servaddr,Pkt_head p,int end_seq)
 {
 	p.data[0] = '\0';
 	p.n_seq = end_seq;

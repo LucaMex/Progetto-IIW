@@ -25,7 +25,7 @@ int read_file(char* buffer,int fd,int max_bytes);
 void write_on_file(char buffer[],int fd, int n_bytes);
 int get_n_bytes(off_t len,int tot_read);
 void copy_data(char dest[],char* src, int n_bytes);
-void write_file_len(off_t* len,int* fd,Header* p, char* filename,const char* directory);
+void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* directory);
 void initialize_fold(const char* directory);
 int create_file(char* filename,const char* directory);
 int file_lock(int fd, int cmd);

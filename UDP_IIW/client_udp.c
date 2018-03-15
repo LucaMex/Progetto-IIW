@@ -45,7 +45,7 @@ void handle_sigchild(struct sigaction* sa)
 
 
 
-int request_to_server(int sockfd,Header* x,struct sockaddr_in* addr)
+int request_to_server(int sockfd,Pkt_head* x,struct sockaddr_in* addr)
 {
     int n;
     struct sockaddr_in s = *addr;
@@ -64,14 +64,14 @@ int request_to_server(int sockfd,Header* x,struct sockaddr_in* addr)
 
 
     for(;;){
-    	if(sendto(sockfd, x,sizeof(Header), 0, (struct sockaddr *)&s,sizeof(s)) < 0){
+    	if(sendto(sockfd, x,sizeof(Pkt_head), 0, (struct sockaddr *)&s,sizeof(s)) < 0){
     		printf("errore\n");
     		err_exit("sendto\n");
     	}
 
     	if(setsockopt (sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&conn_time,sizeof(conn_time)) < 0)
     		err_exit("setsockopt failed\n");
-    	n = recvfrom(sockfd,x,sizeof(Header),0,(struct sockaddr*)&s,&len);
+    	n = recvfrom(sockfd,x,sizeof(Pkt_head),0,(struct sockaddr*)&s,&len);
 
     	if(n < 0){
     		if(errno == EWOULDBLOCK){
@@ -114,10 +114,10 @@ void print_list(Window* w, off_t len,int*tot_write)
 
 
 
-void get_file_client(int sockfd,char* line, Header p, struct sockaddr_in servaddr)
+void get_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in servaddr)
 {
 	int fd = -1, win_ind, i=0, first_seq=p.n_ack;
-	Header h_recv,h_send;
+	Pkt_head h_recv,h_send;
 	off_t len;
 
 	if(strncmp(line,"get",3) == 0){
@@ -240,7 +240,7 @@ void get_file_client(int sockfd,char* line, Header p, struct sockaddr_in servadd
 
 
 
-void send_file_client(int sockfd,char* line, Header p, struct sockaddr_in servaddr)
+void send_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in servaddr)
 {
 	struct thread_data td;
 	int next_ack,n_ack_received = 0,win_ind,end_seq = 0,first_seq=p.n_ack;
@@ -249,7 +249,7 @@ void send_file_client(int sockfd,char* line, Header p, struct sockaddr_in servad
 	char* filename = line + 4;
 	struct timespec arrived;
 	off_t len = 0;
-	Header recv;
+	Pkt_head recv;
 
 	Window* w = NULL;
 	initialize_window(&w,'s');
@@ -399,7 +399,7 @@ int main(int argc, char *argv[]) {
 
   int   sockfd;
   struct    sockaddr_in   servaddr;
-  Header p;
+  Pkt_head p;
   struct sigaction sa;
 
 
