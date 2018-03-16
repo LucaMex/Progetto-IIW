@@ -66,7 +66,7 @@ int get_memid()
 	key_t key = ftok(".",'1');
 	if(key == -1)
 		err_exit("ftok");
-	int id = shmget(key,sizeof(Process_data),IPC_CREAT | 0666);
+	int id = shmget(key,sizeof(Manage_request),IPC_CREAT | 0666);
 	if(id == -1)
 		err_exit("shmget");
 	return id;
@@ -76,9 +76,12 @@ int get_memid()
 
 int get_msg_queue()
 {
+	//creo chiave per coda di messaggi
 	key_t key = ftok(".",'b');
+	//esco in errore 
 	if(key == -1)
 		err_exit("ftok");
+	//prendo al coda di messaggi 
 	int qid = msgget(key,IPC_CREAT |  0666);
 	if(qid == -1)
 		err_exit("msgget");
@@ -87,9 +90,9 @@ int get_msg_queue()
 
 
 
-Process_data* get_shared_memory(int mem_id)
+Manage_request* get_shared_memory(int mem_id)
 {
-	Process_data* p = shmat(mem_id,NULL,0);
+	Manage_request* p = shmat(mem_id,NULL,0);
 	if(p == (void*) -1)
 		err_exit("shmget  ");
 	return p;
@@ -471,7 +474,7 @@ void child_job(int qid,int sid,pid_t pid)
 	struct msgbuf msg;
 
 	msg.mtype = 1;
-	Process_data* pr = get_shared_memory(sid);
+	Manage_request* pr = get_shared_memory(sid);
 
 	while(n_req < 5){
 
@@ -562,7 +565,7 @@ void create_new_processes(int qid, int sid)
 		if(pid == -1)
 			err_exit("fork");
 		if(pid == 0){
-			Process_data* pr = get_shared_memory(sid);
+			Manage_request* pr = get_shared_memory(sid);
 			get_semaphore(&pr->sem);
 			++(pr->n_avail);
 			release_semaphore(&pr->sem);
@@ -648,18 +651,16 @@ int main(int argc, char **argv)
   srand(time(NULL));
 
   /*
-   * Create a message queue where send client data to child processes, in particular
-   *  IP and port number memorized in struct sockaddr_in by recvfrom if argument is
-   *  not NULL
+  Creo una coda di messaggi dove il client invia i dati ai processi figli
+  	-->Invia ip e port del client che ha contattato-->dati messi in sockaddr_in
    */
   int qid = get_msg_queue();
 
 
-  /*
-   * Create shared memory, where set variable with number of available processes, and a semaphore
-   */
+  //creo memoria condivisa-->prendo id memoria condivisa  
+   
   sid = get_memid();
-  Process_data* pr = get_shared_memory(sid);
+  Manage_request* pr = get_shared_memory(sid);
 
 
   if(sem_init(&pr->sem,1,1) == -1)
