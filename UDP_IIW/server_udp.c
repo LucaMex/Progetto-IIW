@@ -48,9 +48,10 @@ void handle_sigchild(struct sigaction* sa)
 void initialize_socket(int* sock_fd,struct sockaddr_in* s)
 {
 	int sockfd;
+	//creo la socket
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		err_exit("errore in socket");
-
+	//associo la socket alla struttura dati precedentemente riempita
 	if (bind(sockfd, (struct sockaddr *)s, sizeof(*s)) < 0)
 		err_exit("error in bind");
 	*sock_fd = sockfd;
@@ -92,6 +93,7 @@ int get_msg_queue()
 
 Manage_request* get_shared_memory(int mem_id)
 {
+	//mappo la memoria condivisa (presa da mem_id) sulla struct che gestisce il lavoro(Manage_request)
 	Manage_request* p = shmat(mem_id,NULL,0);
 	if(p == (void*) -1)
 		err_exit("shmget  ");
@@ -401,7 +403,7 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 
 
 /***************************************************************
-*Process tries receiving command 10 times; if no data 	       *
+Process tries receiving command 10 times; if no data 	       *
 *arrived, return. Process compare received command, and execute*
 *corresponding operation									   *
 ****************************************************************/
@@ -414,10 +416,12 @@ void manage_client(int sockfd,struct msgbuf msg)
 
     int attempts = 0,res;
     for(;;){
+    	//ricevo il comando del client(1 ho ricevuto ,altrimento niente)
     	res = receive_command(sockfd,comm,&r,(struct sockaddr *)&servaddr);
     	if(res == 1)
     		break;
     	else{
+    		//incremento attempts-->fino ad un max di 10 tentativi
     		++attempts;
     		if(attempts == 10){
     			printf("not responding client; exiting\n");
@@ -426,11 +430,12 @@ void manage_client(int sockfd,struct msgbuf msg)
     	}
     }
 
-
+    //se ho ricevuto una put prendo il file
 	if(strncmp(comm, "put", 3) == 0){
 		 get_file_server(comm,sockfd,r,msg.s);
 	}
 
+	//get o list --> invio file
 	else if(  (strncmp(comm,"list",4) == 0) || (strncmp(comm,"get",3) == 0)  ){
 		send_file_server(comm,sockfd,r,msg.s);
 	}
@@ -444,6 +449,7 @@ void manage_client(int sockfd,struct msgbuf msg)
 
 void get_semaphore(sem_t* sem)
 {
+	//decremento il valore puntato da sem-->se =0 blocco e attendo
 	if(sem_wait(sem) == -1)
 		err_exit("sem init");
 }
@@ -477,30 +483,35 @@ void child_job(int qid,int sid,pid_t pid)
 	Manage_request* pr = get_shared_memory(sid);
 
 	while(n_req < 5){
-
+		//controllo se ho ricevuto messaggi sulla coda di messaggi
 		if(msgrcv(qid,&msg,	sizeof(struct sockaddr_in) + sizeof(int),1,0) == -1)
 			err_exit("msgrcv");
-
+		//prendo il semaforo
 		get_semaphore(&pr->sem);
+		//decremento i processi avviabili-->ho preso il semaforo
 		--(pr->n_avail);
+		//rilascio il semaforo
 		release_semaphore(&pr->sem);
 
-
+		//setto memoria della struct sockaddr_in a 0
 		memset((void *)&addr,0, sizeof(addr));
+		//riempo la struttura
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		
 		addr.sin_port = htons(0);
+		//inizializzo socket
+		initialize_socket(&sockfd,&addr);
 
-		initialize_socket(&sockfd,&addr);				//every child process creates a new socket
-
-
+		//all'interno del Pkt_head p metto come nseq -1 e come n_ack quello del client che mi ha contattato(il suo nseq)
 		p.n_seq = -1;
 		p.n_ack = msg.client_seq;
-
-		if (sendto(sockfd, &p, sizeof(Ptk_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			/*connection ack*/
-			err_exit("sendto");
-
-		manage_client(sockfd,msg);						//execute client request
+		//invio sulla socket creata del figlio
+		//il valore 0 --> corrisponde all'ack delal connessione
+		if (sendto(sockfd, &p, sizeof(Ptk_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
+				err_exit("sendto");
+		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
+		manage_client(sockfd,msg);						
 		++n_req;
 
 		get_semaphore(&pr->sem);
@@ -521,7 +532,7 @@ void child_job(int qid,int sid,pid_t pid)
 
 void initialize_processes(int qid,int sid)
 {
-
+	//creo 10 figli e gli assegno i lavoro 
 	(void) sid;
 	pid_t pid;
 	int i;
@@ -662,10 +673,16 @@ int main(int argc, char **argv)
   sid = get_memid();
   Manage_request* pr = get_shared_memory(sid);
 
-
+  /*
+	Inizializzo il semaforo contenuto nella struttura dati Manage_request
+		inizializzo valore ad 1 con int pshared =1 --> semaforo condiviso tra processi->deve stare all'interno
+			di una regione di memoria condivisa
+  */
   if(sem_init(&pr->sem,1,1) == -1)
 	  err_exit("sem init");
-  pr->n_avail = 10;						//initial number of processes
+
+  //numero iniziale di processi --> quanti processi creo
+  pr->n_avail = 10;						
 
   initialize_processes(qid,sid);		//create processes and passing memory id and queue id
 

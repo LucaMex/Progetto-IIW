@@ -91,10 +91,12 @@ int receive_command(int sockfd,char comm[],Pkt_head* r,struct sockaddr* servaddr
 	struct sockaddr s = *servaddr;
 	socklen_t len = sizeof(s);
 	int j = 0,result = 0;
-
+	//inizializzo il timeout(passo attempts=0), e setto la socket in timeout
 	start_socket_timeout(&sockfd,0);
+
     int n = recvfrom(sockfd, r, sizeof(Pkt_head), 0, (struct sockaddr *)servaddr, &len);
     if(n == -1){
+    	//EWOULDBLOCK ritornato quando uso non blocking-socket e non c'è abbastanza spazio nel kernel data buffer
     	if(errno == EWOULDBLOCK){
     		errno = 0;
     		result = 0;

@@ -6,15 +6,20 @@ long estimated = 0,deviance = 0;
 struct timespec start_timeout = {0,15000000};
 
 void start_socket_timeout(int* sockfd,int attempts)
-{
+{	
+	//0 sec 0 nsec
 	struct timespec conn_time = {0,0};
+
 	if(attempts == 0){
 		conn_time.tv_sec = 0;
 		conn_time.tv_nsec = 950000;
 	}
 	else
+		//incremento di tante quante volte ho tentato
 		conn_time.tv_sec = 5*attempts;
+
 	int sock = *sockfd;
+	//setto la socket con  la struttura dati timespec per mettere un timeout
 	if(setsockopt (sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&conn_time,sizeof(conn_time)) < 0)
 	    err_exit("setsockopt failed\n");
 }
