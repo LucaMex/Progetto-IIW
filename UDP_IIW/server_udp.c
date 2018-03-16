@@ -305,9 +305,10 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 {
 	int fd, i=0, n_pkt,start_seq,win_ind,expected_ack;
 	int existing = 0;
-
+	//sequenza iniziale uguale a quella del pktHead
 	start_seq = p.n_seq;
-	fd = create_file(comm+4,"./serverDir/");		//tries creating file; if already exists, return -1
+	//prendo il file descriptor
+	fd = create_file(comm+4,"./serverDir/");		
 	if(fd == -1)
 		printf("file already in server directory");
 
@@ -317,8 +318,14 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 	 */
 
 	Window* w = NULL;
+	//passo un puntatore doppio e flag r
+	initialize_window(&w,'r');						//set every position of window as free
 
-	initialize_window(&w,'r');					//set every position of window as free
+/*---------------------------------------------------------------	
+-----------------------------------------------------------------
+						ARRIVATO QUI 
+-----------------------------------------------------------------
+-----------------------------------------------------------------*/
 	win_ind = (p.n_seq - start_seq)%(n_win);
 	set_buffered(w,win_ind,p.n_seq);			//save command in window
 

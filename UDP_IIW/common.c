@@ -113,13 +113,13 @@ char* write_pathname(int len,const char*path,char*filename)
 	if(buffer == NULL)
 		err_exit("malloc");
 	unsigned int i;
-
+	//copio dentro buffer il path
 	for(i=0;i<strlen(path);i++){
 		*(buffer+i) = *(path+i);
 	}
 
 	unsigned int j;
-
+	//aggiunto il file name
 	for(j=0;j<strlen(filename);i++,j++){
 		*(buffer + i ) = *(filename + j);
 	}
@@ -136,6 +136,7 @@ char* get_file_path(char* filename,const char* directory)
 {
 	int l_path = strlen(directory);
 	int l_name = strlen(filename);
+	//creo il path
     char* new_path = write_pathname(l_path + l_name + 1,directory,filename);
 	return new_path;
 }
@@ -256,28 +257,29 @@ void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* d
 	sprintf(p->data,"%zu",*len);
 }
 
-
-void initialize_fold(const char* directory) //se servDir non esiste la creo nella cartella corrente del programma ed anche list_file.txt
+//se servDir non esiste la creo nella cartella corrente del programma ed anche list_file.txt
+void initialize_fold(const char* directory) 
 {
 	struct stat st = {0};
 
 	if (stat(directory, &st) == -1){ //se non c'è la creo
-
+		//creo la directory con 0700 permessi di accesso
 		if(mkdir(directory, 0700) == -1)
 			err_exit("mkdir\n");
 	}
 	return;
 }
 
-
-int create_file(char* filename,const char* directory) //scarica  file, se tutto bene ritorna 0 e il file è chiuso, senno -1; va passato l'ack attuale  della comunicazione
+//scarica  file, se tutto bene ritorna 0 e il file è chiuso, senno -1; va passato l'ack attuale  della comunicazione
+int create_file(char* filename,const char* directory) 
 {
 	int fd;
 	char* new_path;
-
+	//prendo il path a partire da filename e directory
 	new_path = get_file_path(filename,directory);
+	//creo la cartella se non esiste(anche il file list.txt)--> vedi commenti funzione initialize_fold
 	initialize_fold(directory);
-
+	//prendo il file descriptor del file
 	fd = open(new_path, O_CREAT | O_EXCL | O_WRONLY,0733);
 	if (fd == -1) {
 		if(errno == EEXIST){

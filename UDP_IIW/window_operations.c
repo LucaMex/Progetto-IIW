@@ -15,15 +15,19 @@ void initialize_window(Window** w,char c)
 		flag = -2;
 	else
 		flag = 1;
+
 	window = malloc(sizeof(Window));
 	if(window == NULL)
 		err_exit("malloc");
-	window->win = malloc((n_win+1)*sizeof(Header));
+	//alloco memoria per la struttura dati pkt_head in window(ne alloco tanta quante la finestra-->ogni "slot" un pkthead)
+	window->win = malloc((n_win+1)*sizeof(Pkt_head));
 	if(window->win == NULL)
 		err_exit("malloc");
+	//setto il buffer ciroclare come vuoto
 	window->E = window->S = window->end = 0;
 	int j;
 	for(j = 0; j < n_win+1; j++)
+		//setto tutti i flag dei pacchetti con 1
 		window->win[j].flag= flag;
 	*w = window;
 }
@@ -118,7 +122,7 @@ void read_and_insert(Window* w,off_t len,int* tot_read,int fd,int seq)
  * get size to read from file and copy data in window; then, packet flag is setted to 0, to *
  * indicates packet is buffered.															*
  ********************************************************************************************/
-void buffering_packet(Window* w,int win_ind,off_t len,int size,Header p,int* tot_read)
+void buffering_packet(Window* w,int win_ind,off_t len,int size,Pkt_head p,int* tot_read)
 {
 	int n_bytes = get_n_bytes(len,size);
 	copy_data(w->win[win_ind].data,p.data,n_bytes);
@@ -138,7 +142,7 @@ void save_packet(Window* w,int fd,off_t len, int* tot_write)
 
 
 
-void set_existing(Header* p)
+void set_existing(Pkt_head* p)
 {
 	int x;
 	for(x = 0; x < MAXLINE; x++)
