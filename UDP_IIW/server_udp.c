@@ -319,16 +319,18 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 
 	Window* w = NULL;
 	//passo un puntatore doppio e flag r
-	initialize_window(&w,'r');						//set every position of window as free
+	initialize_window(&w,'r');						
 
-/*---------------------------------------------------------------	
------------------------------------------------------------------
-						ARRIVATO QUI 
------------------------------------------------------------------
------------------------------------------------------------------*/
+	//calcolo l'indice rispetto ai valori sequenza e la lughezza della finestra
 	win_ind = (p.n_seq - start_seq)%(n_win);
-	set_buffered(w,win_ind,p.n_seq);			//save command in window
-
+	
+	//salvo il comando nella finestra
+	set_buffered(w,win_ind,p.n_seq);		
+	
+	/*
+	setto il flag della finestra ad 1 e indico cosi che la posizione è libera
+	incremento l'indice di ricezione dati
+	*/
 	increase_receive_win(w);
 
 
@@ -347,62 +349,67 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 		return;
 	}
 
-
-	if(recv.data[0] == '.'){			//if file exists, client resend packet with '.' in data
+	//se ho ricevuto '.' vuol dire che il file esisteva, il client se ne è accorto e mi ha mandatp '.'-->chiudo
+	if(recv.data[0] == '.'){			
 		printf("ending\n");
 	    return;
 	}
 
+	//calcolo indice con la classica operazione modulo
 	win_ind = (recv.n_seq - start_seq)%(n_win);
-	set_buffered(w,win_ind,recv.n_seq);
-	increase_receive_win(w);
-	off_t len = conv_in_off_t(recv.data);
 
+	set_buffered(w,win_ind,recv.n_seq);
+	
+	increase_receive_win(w);
+	//converto in lunghezza-->lunghezza del file ricevuta
+	off_t len = conv_in_off_t(recv.data);
+	//invio ack
 	send_ack(sockfd,recv,servaddr,COMMAND_LOSS,recv.n_seq);
+	//mi aspetto l'ack adesso successivo a quello del n_seq
 	expected_ack = recv.n_seq + 1;
 
 	int tot_read = 0,tot_write = 0;
-
+	//inizio la ricezione di tutti i pkt del file
 	for(;;){
 
-		if(tot_write == len)						/*received all packets*/
+		if(tot_write == len)						
 			break;
 
 		if(!receive_packet(sockfd, &p,&servaddr)){
 			printf("not available client;returning..\n");
 			return;
 		}
-
+		//aggiorno n_pkt e indicie window
 		n_pkt = (p.n_seq - start_seq) - 2;
 		win_ind = (p.n_seq-start_seq)%n_win;
 
 
-		/*expected ack is first packet sequence that receiver expects to receive*/
-
+		// ho perso l'ack -->rinvia 
 		if(p.n_seq<expected_ack || w->win[win_ind].flag == 0){
-			send_ack(sockfd,p,servaddr,COMMAND_LOSS,p.n_seq);			/*lost ack; resend*/
+			send_ack(sockfd,p,servaddr,COMMAND_LOSS,p.n_seq);			
 			continue;
 		}
 
 		buffering_packet(w,win_ind,len,MAXLINE*n_pkt,p,&tot_read);
-
+		//se trovo flag ==0-->salvo il pkt ovvero scrivo sul buffer 
 		while(w->win[w->S].flag == 0){
 			save_packet(w,fd,len,&tot_write);
 			++expected_ack;
+			//incremento finestra di riczione
 			increase_receive_win(w);
 		}
-
-		send_ack(sockfd,p,servaddr,PACKET_LOSS,p.n_seq);		/*send ack for packet*/
-
+		//invio ack del pkt ricevuto
+		send_ack(sockfd,p,servaddr,PACKET_LOSS,p.n_seq);		
 		++i;
 	}
 
+	//attendo l'ack di fine trasmissione
 	waiting(sockfd,servaddr,p,expected_ack);
 
-
-	if(close(fd) == -1)				 /*lock on file is automatically released with close*/
+	//chiudo il file-->tanto il lock viene rilasciato automaticamente
+	if(close(fd) == -1)		
 		err_exit("close file");
-
+	//libero memoria allocata
 	free(w->win);
 	free(w);
 }

@@ -70,6 +70,7 @@ int receive_cmd_ack(int sockfd,Pkt_head* p,struct sockaddr_in* servaddr)
 	socklen_t len = sizeof(s);
 	int n,result = 0;
 	start_socket_timeout(&sockfd,0);
+	//vedo se ho ricevuto l'ack che attendevo-->fin
 	n = recvfrom(sockfd,p,sizeof(Pkt_head),0,(struct sockaddr*)servaddr,&len);
 	if(n == -1){
 		if(errno == EWOULDBLOCK){
@@ -80,6 +81,7 @@ int receive_cmd_ack(int sockfd,Pkt_head* p,struct sockaddr_in* servaddr)
 	}
 	else
 		result = 1;
+	//resetto il timeout della socket
 	reset_socket_timeout(&sockfd);
 
 	return result;

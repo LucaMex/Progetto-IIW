@@ -118,15 +118,14 @@ void read_and_insert(Window* w,off_t len,int* tot_read,int fd,int seq)
 
 
 
-/********************************************************************************************
- * get size to read from file and copy data in window; then, packet flag is setted to 0, to *
- * indicates packet is buffered.															*
- ********************************************************************************************/
 void buffering_packet(Window* w,int win_ind,off_t len,int size,Pkt_head p,int* tot_read)
 {
+	//prendo la dimensione dei byte da buff
 	int n_bytes = get_n_bytes(len,size);
 	copy_data(w->win[win_ind].data,p.data,n_bytes);
 	*tot_read = *tot_read + n_bytes;
+
+	//metto flag a 0 che indica che è stato bufferizzato il pkt
 	w->win[win_ind].flag = 0;
 	w->win[win_ind].n_seq = p.n_seq;
 
