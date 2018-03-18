@@ -102,14 +102,14 @@ Manage_request* get_shared_memory(int mem_id)
 
 
 
-void listen_request(int sockfd,Ptk_head* p,struct sockaddr_in* addr,socklen_t* len)
+void listen_request(int sockfd,Pkt_head* p,struct sockaddr_in* addr,socklen_t* len)
 {
     struct sockaddr_in servaddr = *addr;
     socklen_t l = *len;
     l = sizeof(servaddr);
     printf("listening request\n");
 
-    if((recvfrom(sockfd, p, sizeof(Ptk_head), 0, (struct sockaddr *)&servaddr, &l)) < 0)
+    if((recvfrom(sockfd, p, sizeof(Pkt_head), 0, (struct sockaddr *)&servaddr, &l)) < 0)
          err_exit("recvfrom\n");
 
     *addr = servaddr;
@@ -122,13 +122,13 @@ void listen_request(int sockfd,Ptk_head* p,struct sockaddr_in* addr,socklen_t* l
 
 
 
-void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servaddr)
+void send_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 {
 	int n_ack_received = 0,next_ack,i = 0;
 	int fd = -1;
 	struct thread_data td;
 	int end_seq = 0,win_ind,start_seq = p.n_seq;
-	Ptk_head recv_h;
+	Pkt_head recv_h;
 	Window* w = NULL;
 	struct timespec arrived;
 	//inizializzo la finestra con flag s
@@ -324,7 +324,7 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 
 
 
-void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servaddr)
+void get_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 {
 	int fd, i=0, n_pkt,start_seq,win_ind,expected_ack;
 	int existing = 0;
@@ -364,7 +364,7 @@ void get_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in servad
 
 	send_ack(sockfd,p,servaddr,COMMAND_LOSS,p.n_seq);							/*send ack for command*/
 
-	Ptk_head recv;
+	Pkt_head recv;
 
 	/*server waiting for size file; if not received, tries 10 times to resend it*/
 	if(!receive_ack(w,sockfd,servaddr,&recv,p.n_seq + 1,'r',existing)){
@@ -446,7 +446,7 @@ Process tries receiving command 10 times; if no data 	       *
 ****************************************************************/
 void manage_client(int sockfd,struct msgbuf msg)
 {
-	Ptk_head r;
+	Pkt_head r;
 	struct sockaddr_in servaddr;
 
     char comm[15];
@@ -511,7 +511,7 @@ void child_job(int qid,int sid,pid_t pid)
 
 	int n_req = 0;
 	(void)pid;
-	Ptk_head p;
+	Pkt_head p;
 	struct sockaddr_in addr;
 	int sockfd;
 	struct msgbuf msg;
@@ -545,7 +545,7 @@ void child_job(int qid,int sid,pid_t pid)
 		p.n_ack = msg.client_seq;
 		//invio sulla socket creata del figlio
 		//il valore 0 --> corrisponde all'ack delal connessione
-		if (sendto(sockfd, &p, sizeof(Ptk_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
+		if (sendto(sockfd, &p, sizeof(Pkt_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
 				err_exit("sendto");
 		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
 		manage_client(sockfd,msg);		
@@ -588,7 +588,7 @@ void initialize_processes(int qid,int sid)
 
 
 
-void write_on_queue(int qid,struct sockaddr_in s,Ptk_head p)
+void write_on_queue(int qid,struct sockaddr_in s,Pkt_head p)
 {
 
 	 struct msgbuf msg;
@@ -677,7 +677,7 @@ int main(int argc, char **argv)
   socklen_t len;
   struct sockaddr_in addr;
   //Struttura dati per pkt
-  Ptk_head p;
+  Pkt_head p;
   //Usato per gestire figli zombie -->struttura da riempire in sighchild
   struct sigaction sa;
 
