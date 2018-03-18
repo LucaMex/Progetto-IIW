@@ -64,6 +64,7 @@ void calculate_timeout(struct timespec end_time,struct timespec packet_time)
 	estimated = ((1-alpha)*(old_estimated)) + ((alpha)*(time_tot));
 	deviance = ((1-beta)*(deviance)) + (beta*(labs(time_tot - estimated)));
 	time_tot = estimated + (4*deviance);
+	
 	start_timeout.tv_sec = time_tot/(1.0e9);
 	if(start_timeout.tv_sec > 0)
 		start_timeout.tv_nsec = time_tot - (start_timeout.tv_sec*(1.0e9));
