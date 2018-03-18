@@ -194,6 +194,7 @@ int read_file(char* buffer,int fd,int max_bytes)
 {
 	int r,tot = 0;
 	for(;;){
+		//finche non ho letto il max-->continuo-->classica funzione di SO 
 		if(tot == max_bytes)
 			break;
 		r = read(fd,buffer+tot,max_bytes-tot);
@@ -230,6 +231,7 @@ void write_on_file(char buffer[],int fd, int n_bytes)
 
 int get_n_bytes(off_t len,int tot_read)
 {
+	//è una saturazione dei byte
 	int n_bytes;
 	if(len-tot_read < MAXLINE)
 		n_bytes = len - tot_read;

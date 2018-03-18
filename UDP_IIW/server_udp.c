@@ -131,35 +131,43 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 	Ptk_head recv_h;
 	Window* w = NULL;
 	struct timespec arrived;
-
+	//inizializzo la finestra con flag s
 	initialize_window(&w,'s');
-
+	//setto con la sequenza inziale 
 	w->win[w->E].n_ack = start_seq;
-	send_ack(sockfd,w->win[w->E],servaddr,COMMAND_LOSS,p.n_seq);			/*send ack for command*/
+
+	//invio l'ack del comando
+	send_ack(sockfd,w->win[w->E],servaddr,COMMAND_LOSS,p.n_seq);
+
 	w->win[w->E].flag = 1;
 	w->E = (w->E + 1)%(n_win + 1);
 	int tmp = start_seq;
 
-
+	// se non ricevo nulla per 10 tentativi(la recevie_ack tenta 10 volte )-->chiudo connessione
 	if(!receive_ack(w,sockfd,servaddr,&recv_h,p.n_seq,'s',0)){
 		close_file(fd);
 		printf("not responding client; cannot start operation\n");
 		return;
 	}
-
+	//ricevuto-->pkt pieno
 	w->win[w->S].flag = 2;
+	//sposto finestra 
 	increase_window(w);
 
 
 	int existing = 1;
-	if(strncmp(comm,"get",3)== 0){							/*get file*/
+	//Get file
+	if(strncmp(comm,"get",3)== 0){		
+		//controllo se il file richiesto esiste-->altrimenti esco				
 		if(!existing_file(comm+4,"./serverDir/")){
 			printf("not existing file; try another command\n");
 			existing = 0;
 		}
+		//file esiste
 		else{
 			char* new_path = get_file_path(comm+4,"./serverDir/");
 			fd = open_file(new_path,O_RDONLY);
+			//prendo il lock sul file
 			if(locked_file(fd))
 				existing = 0;
 		}
@@ -168,6 +176,7 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 
 
 	else{
+		//prendo la lista -->non era una get quindi è una list
 		char* new_path = get_file_path("list_file.txt","./serverDir/");					/*get file on server directory*/
 		fd = open_file(new_path,O_RDONLY);
 		if(file_lock(fd,LOCK_SH) == -1)
@@ -180,48 +189,58 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 		sprintf(p.data,"%zu",len);
 	}
 	else
-		p.data[0] = '\0';					/*if file is locked or not exists, server send data with '\0'
-											in first position*/
+		//se il file è gia in   lock--->ho messo existing =0(oppure non esiste)-->server invia '\0' in prima posizione
+		p.data[0] = '\0';					
 
 	insert_in_window(w,p.data,tmp + 1,strlen(p.data));
-	send_packet(sockfd,servaddr,&(w->win[w->E]),COMMAND_LOSS);			/*send size file*/
+	//invio dim del pkt
+	send_packet(sockfd,servaddr,&(w->win[w->E]),COMMAND_LOSS);			
+	//sposto E del buffer circolare 
 	w->E = (w->E + 1)%(n_win + 1);
 
-
+	//Se il client non risponde chiudo
 	if(!receive_ack(w,sockfd,servaddr,&recv_h,tmp + 1,'s',0)){
 		close_file(fd);
 		printf("not responding client; cannot start operation\n");
 		return;
 	}
-
+	//se exisisting =0 -->finisco
 	if(p.data[0] == '\0')
 		return;
-
+	//metto il flag = 2-->pkt pieno
 	w->win[w->S].flag = 2;
+	//sposto finestra
 	increase_window(w);
 
+	//calcolo quanti pkt sara composto il mesaggio in base alla lunghezzad del file richiesto
 	int tot_read = 0,n_packets = get_n_packets(len);
 
-
+	//per tutta la finestra
 	for(i = 0; i < n_win; i++){
-		read_and_insert(w,len,&tot_read,fd,start_seq + i + 2);
-		end_seq = w->win[w->E].n_seq + 1;
-		send_packet(sockfd,servaddr,&(w->win[w->E]),PACKET_LOSS);
 
+		read_and_insert(w,len,&tot_read,fd,start_seq + i + 2);
+		//aggiorno end seq inbase alla seq che sono riuscito ad inviare
+		end_seq = w->win[w->E].n_seq + 1;
+		//invio pkt-->sempre con prob% di perdita
+		send_packet(sockfd,servaddr,&(w->win[w->E]),PACKET_LOSS);
+		//aggiorno posizioni buffer ciroclare
 		w->E = (w->E + 1)%(n_win+1);
+		//Se ho letto tutto -->chiudo
 		if(tot_read >= len)
 			break;
 	}
 
-	start_thread(td,servaddr,sockfd,w);				//start thread for retransmitting expired packets*/
+	//faccio partire un thread per la gestione dei pkt da ritrasmettere 
+	start_thread(td,servaddr,sockfd,w);
+	//ack successivo che mi aspetto				
 	next_ack = w->win[w->S].n_seq;
 
 	for(;;){
-
+		//se ho ricevuto tanti pacchetti quanti ne aspettavo finisco
 		if(n_ack_received == n_packets)
 			break;
-
-		if(!receive_packet(sockfd,&p,&servaddr)){		//if no packets arrived, request terminates with error
+		//se non ricevo niente-->chiud con errore
+		if(!receive_packet(sockfd,&p,&servaddr)){		
 			close_file(fd);			
 			if(tot_read == len)
 				printf("sended all file, but received no response from client; operation could not be completed\n");
@@ -229,22 +248,24 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 				printf("not responding client; exiting\n");
 			return;
 		}
-
+		//calcolo nuovo indice
 		win_ind = (p.n_ack-start_seq)%(n_win + 1);
 
 		if(p.n_ack<next_ack || (w->win[win_ind].flag == 2))
 			continue;
-
+			//prendo il lock
 		mutex_lock(&w->mtx);
-		w->win[win_ind].flag = 2;				/*received ack*/
+		//ho ricevuto l'ack-->pkt pieno-->2
+		w->win[win_ind].flag = 2;	
+		//Rilasci lock
 		mutex_unlock(&w->mtx);
 
-
+		//controllo se il timer è adattativo-->se si lo calcolo
 		if(adaptive == 1){
 			start_timer(&arrived);
 			calculate_timeout(arrived,w->win[win_ind].tstart);
 		}
-
+		
 		next_ack = next_ack + increase_window(w);
 		++n_ack_received;
 

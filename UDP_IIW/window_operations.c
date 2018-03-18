@@ -12,8 +12,11 @@ void initialize_window(Window** w,char c)
 	Window* window;
 	int flag;
 	if(c == 's')
+		//flag=-2 indica che la finestra usata per ricevere -->pkt vuoto posso inserire dati
+														//dopo inseriti viene messo a 0 e dopo inviat ia 2 
 		flag = -2;
 	else
+		//sto in ricezione-->1 pkt vuoto, 0 pieno
 		flag = 1;
 
 	window = malloc(sizeof(Window));
@@ -79,9 +82,10 @@ void check_window(Window* w,int n_ack,int sockfd,struct sockaddr_in servaddr)
 	for(j = w->S; j!= n_ack;){
 		if(w->win[j].flag == 1){
 
+			//scatta il timer-->rifaccio ripartire il timer -->rinvio pacchetto
 			if(expired_timeout(time_actual,w->win[j].tstart)){
-				start_timer(&(w->win[j].tstart));					/*restart timer*/
-				send_packet(sockfd,servaddr,&(w->win[j]),COMMAND_LOSS);			/*resend packet*/
+				start_timer(&(w->win[j].tstart));					
+				send_packet(sockfd,servaddr,&(w->win[j]),COMMAND_LOSS);		
 			}
 		}
 		j = (j+1)%(n_win + 1);
@@ -92,10 +96,12 @@ void check_window(Window* w,int n_ack,int sockfd,struct sockaddr_in servaddr)
 
 void insert_in_window(Window*w, char data[],int first_seq,int n_bytes)
 {
+	//inserisco nella finestra settando anche dati e timeout
 	w->win[w->E].n_seq = first_seq;
 	copy_data(w->win[w->E].data,data,n_bytes);
 	set_timeout(&(w->win[w->E].tstart));
 	start_timer(&(w->win[w->E].tstart));
+	//inviato-->flag 1
 	w->win[w->E].flag = 1;
 
 }
@@ -109,9 +115,13 @@ void read_and_insert(Window* w,off_t len,int* tot_read,int fd,int seq)
 	char* buffer = malloc(MAXLINE*sizeof(char));
 	if(buffer == NULL)
 		err_exit("malloc");
+
 	int n_bytes = get_n_bytes(len,*tot_read);
+	
 	int r = read_file(buffer,fd,n_bytes);
+	//aggiorno quanti ne no letti
 	*tot_read = *tot_read + r;
+	//inserisco nella finestra
 	insert_in_window(w,buffer,seq,n_bytes);
 	free(buffer);
 }

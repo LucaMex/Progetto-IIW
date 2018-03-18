@@ -121,6 +121,7 @@ int receive_command(int sockfd,char comm[],Pkt_head* r,struct sockaddr* servaddr
 int receive_ack(Window* w,int sockfd,struct sockaddr_in servaddr,Pkt_head* recv,int seq,char c,int existing)
 {
 	Pkt_head send;
+	//attendo al massimo 10 tentativi
 	int attempts = 0;
 	for(;;){
 		if(attempts == 10)

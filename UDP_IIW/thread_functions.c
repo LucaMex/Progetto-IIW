@@ -53,20 +53,25 @@ void send_signal(pthread_cond_t* cond)
 
 void* thread_job(void* arg)
 {
+
 	struct thread_data* td = (struct thread_data*) arg;
 	Window* w;
 	int sockfd;
 	struct sockaddr_in servaddr;
+	//Prendo dalla strutttura thread_job l a finestra
 	w = td->w;
 	sockfd = td->sockfd;
 
 	servaddr = td->servaddr;
 
+
 	struct timespec time_check = {0,7000000};
 
 	for(;;){
 		nanosleep(&time_check,NULL);
+		//controllo la finestra per vedere i pkt da ritrasmettere
 		check_window(w,w->E,sockfd,servaddr);				/*control expired packets*/
+		//se end ==1-->ho finito
 		if(w->end == 1)
 			break;
 	}
@@ -79,9 +84,11 @@ void* thread_job(void* arg)
 
 void start_thread(struct thread_data td,struct sockaddr_in servaddr,int sockfd,Window* w)
 {
+	//riempio la struttura thread_data
 	td.servaddr = servaddr;
 	td.sockfd = sockfd;
 	td.w = w;
+	//creo il thread con puntatore a funzione thread_job
 	if(pthread_create(&(td.tid),NULL,thread_job,&td) != 0)
 		err_exit("pthread create");
 }
