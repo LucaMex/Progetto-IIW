@@ -6,15 +6,20 @@ long estimated = 0,deviance = 0;
 struct timespec start_timeout = {0,15000000};
 
 void start_socket_timeout(int* sockfd,int attempts)
-{
+{	
+	//0 sec 0 nsec
 	struct timespec conn_time = {0,0};
+
 	if(attempts == 0){
 		conn_time.tv_sec = 0;
 		conn_time.tv_nsec = 950000;
 	}
 	else
+		//incremento di tante quante volte ho tentato
 		conn_time.tv_sec = 5*attempts;
+
 	int sock = *sockfd;
+	//setto la socket con  la struttura dati timespec per mettere un timeout
 	if(setsockopt (sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&conn_time,sizeof(conn_time)) < 0)
 	    err_exit("setsockopt failed\n");
 }
@@ -55,9 +60,11 @@ void calculate_timeout(struct timespec end_time,struct timespec packet_time)
 		return;
 	if(time_tot<(1*(1.0e6)))
 		return;
+	//calcolo la dinamica del sistema di adattamento del timer
 	estimated = ((1-alpha)*(old_estimated)) + ((alpha)*(time_tot));
 	deviance = ((1-beta)*(deviance)) + (beta*(labs(time_tot - estimated)));
 	time_tot = estimated + (4*deviance);
+	
 	start_timeout.tv_sec = time_tot/(1.0e9);
 	if(start_timeout.tv_sec > 0)
 		start_timeout.tv_nsec = time_tot - (start_timeout.tv_sec*(1.0e9));
@@ -87,7 +94,7 @@ int expired_timeout(struct timespec actual,struct timespec packet_time)
 	long time2 = packet_time.tv_sec*(1.0e9) + packet_time.tv_nsec;
 	long elapsed = time1 - time2;
 	long time3 = start_timeout.tv_sec*(1.0e9) + start_timeout.tv_nsec;
-
+	//se è passato piu tempo rispetto al timer di timeout
 	if(elapsed > time3)
 		return 1;
 

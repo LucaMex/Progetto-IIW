@@ -14,7 +14,7 @@ s#ifndef DATA_TYPES_H_
 typedef struct{
 	sem_t sem;
 	int n_avail;
-}Process_data;
+}Manage_request;
 
 
 typedef struct{
