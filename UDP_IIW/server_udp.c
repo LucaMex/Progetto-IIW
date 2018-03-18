@@ -265,23 +265,25 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 			start_timer(&arrived);
 			calculate_timeout(arrived,w->win[win_ind].tstart);
 		}
-		
+		//aumento finestra di tante posizioni quanti ne ho occupate(flag==2)
 		next_ack = next_ack + increase_window(w);
+		
 		++n_ack_received;
 
 		if(tot_read>=len)
 			continue;
 
 		int nE = (w->E + 1)%(n_win + 1);
+		//finche la window non è piena 
+		while(nE != w->S){						
 
-		while(nE != w->S){											/*window not full*/
 			read_and_insert(w,len,&tot_read,fd,start_seq + i + 2);
 			send_packet(sockfd,servaddr,&(w->win[w->E]),PACKET_LOSS);
 
 			if(tot_read == len){
 				end_seq = w->win[w->E].n_seq + 1;
 			}
-
+			//aggiorno buffer circloare
 			w->E = nE;
 			nE = (nE + 1)%(n_win + 1);
 			++i;
@@ -301,12 +303,12 @@ void send_file_server(char comm[],int sockfd,Ptk_head p,struct sockaddr_in serva
 	 */
 
 	close_file(fd);
-
+	//se non ricevo niente esco
 	if(!wait_ack(sockfd,servaddr,p,end_seq)){
 		printf("sended file, but received no response from client\n");
 		return;
 	}
-
+	//libero la memoria
 
 	free(w->win);
 	free(w);
@@ -546,14 +548,16 @@ void child_job(int qid,int sid,pid_t pid)
 		if (sendto(sockfd, &p, sizeof(Ptk_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
 				err_exit("sendto");
 		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
-		manage_client(sockfd,msg);						
+		manage_client(sockfd,msg);		
+		//finito di gestire-->incremento nreq				
 		++n_req;
-
+		//prendo il semaforo per aggiunarnare la variabile di processi ora avviabili
+			//ho finito il lavoro-->sono di nuovo avviabilie
 		get_semaphore(&pr->sem);
 		++(pr->n_avail);
 		release_semaphore(&pr->sem);
 	}
-
+	//ho finito(ho fatto 5 richeiste)-->prendo semaforo e decremento processi disponibili
 	get_semaphore(&pr->sem);
 	--(pr->n_avail);
 	release_semaphore(&pr->sem);
@@ -736,11 +740,9 @@ int main(int argc, char **argv)
 	  update_list_file();
 	  write_on_queue(qid,addr,p);					//write on queue message client data
 
-	  /*
-	   * When number of available processes is less than 5, create other 5 processes
-	   */
-
+	  //se numero di processi è minore di 5-->creo altri 5 figli
 	  if(pr->n_avail <5)
+
 		create_new_processes(qid,sid);
   }
 
