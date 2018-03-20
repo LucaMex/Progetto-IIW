@@ -671,7 +671,7 @@ int main(int argc, char **argv)
 
   //socket ascolto server
   int sockfd;
-
+  clearScreen();
   int sid;
   //struttura dati per gestire informazioni client
   socklen_t len;

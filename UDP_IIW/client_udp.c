@@ -402,7 +402,6 @@ int main(int argc, char *argv[]) {
   Pkt_head p;
   struct sigaction sa;
 
-
   if(DIMWIN <= 0)
 	  n_win = 80;
   if(DIMWIN > 93)
@@ -423,7 +422,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "utilizzo: daytime_clientUDP <indirizzo IP  server>\n");
     exit(1);
   }
-
+  clearScreen();
 
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) { /* crea il socket   */
 	  err_exit("socket");

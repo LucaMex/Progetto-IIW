@@ -10,12 +10,25 @@
 #include "data_types.h"
 
 
+
+
+
 void err_exit(char* str)
 {
     perror(str);
     exit(EXIT_FAILURE);
 }
 
+
+void clearScreen()
+{
+  const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
+  if(write(STDOUT_FILENO, CLEAR_SCREEN_ANSI,strlen(CLEAR_SCREEN_ANSI))==-1){
+
+  	err_exit("ClearScreen");
+  }
+  printf(">");
+}
 
 int convert_in_int(char* str)
 {
