@@ -5,17 +5,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include"common.h"
 #include <string.h>
 #define SERVPORT 5194
 #include "data_types.h"
 
 
-
-
-
 void err_exit(char* str)
 {
-    perror(str);
+    fprintf(stderr,ANSI_COLOR_RED "%s\n" ANSI_COLOR_RESET,str );
     exit(EXIT_FAILURE);
 }
 

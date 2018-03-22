@@ -123,7 +123,7 @@ void get_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in serva
 	if(strncmp(line,"get",3) == 0){
 		fd = create_file(line+4,"./clientDir/");
 		if(fd == -1){
-			printf("file already exists in your directory\n");
+			printf(ANSI_COLOR_YELLOW "file already exists in your directory\n" ANSI_COLOR_RESET);
 			return;
 		}
 	}
@@ -143,7 +143,7 @@ void get_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in serva
 
 
 	if(!receive_ack(w,sockfd,servaddr,&h_recv,first_seq,'s',0)){
-		printf("Server not responding; cannot start operation\n");
+		printf(ANSI_COLOR_YELLOW "Server not responding; cannot start operation\n" ANSI_COLOR_RESET);
 		return;
 	}
 
@@ -153,7 +153,7 @@ void get_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in serva
 
 
 	if(!receive_ack(w,sockfd,servaddr,&h_recv,tmp+1,'r',0)){
-		printf("Cannot receive size file from server; exiting\n");
+		printf(ANSI_COLOR_YELLOW "Cannot receive size file from server; exiting\n" ANSI_COLOR_RESET);
 		return;
 	}
 
@@ -221,7 +221,7 @@ void get_file_client(int sockfd,char* line, Pkt_head p, struct sockaddr_in serva
 		printf("Complete operation, but server busy\n");
 
 	else
-		printf("Complete!\n");
+		printf(ANSI_COLOR_GREEN "Complete!\n" ANSI_COLOR_RESET);
 
 	if(fd == -1)
 		return;
@@ -419,7 +419,8 @@ int main(int argc, char *argv[]) {
 
 
   if (argc < 2) {
-    fprintf(stderr, "utilizzo: daytime_clientUDP <indirizzo IP  server>\n");
+  	err_exit("utilizzo: daytime_clientUDP <indirizzo IP  server>");
+  //  fprintf(stderr, "utilizzo: daytime_clientUDP <indirizzo IP  server>\n");
     exit(1);
   }
   clearScreen();
@@ -502,7 +503,7 @@ int main(int argc, char *argv[]) {
 
 
 	  else{
-	  		fprintf(stderr, "command not recognize. USE COMMAND  LIST or GET/PUT FOLLOWEWD BY A PROPER FILE NAME \n");
+	  		fprintf(stderr, ANSI_COLOR_RED "command not recognize. USE COMMAND  LIST or GET/PUT FOLLOWEWD BY A PROPER FILE NAME \n" ANSI_COLOR_RESET);
 	  		break;
 	  }
 
