@@ -23,9 +23,6 @@ void sighandler(int sign)
 	return;
 }
 
-
-
-
 void handle_sigchild(struct sigaction* sa)
 {
 	//Riempio la struttura dati con i valori richiesti
@@ -40,10 +37,7 @@ void handle_sigchild(struct sigaction* sa)
     }
 }
 
-
-
-
-
+//-----------------------------------------------------------------------------------------------------
 
 void initialize_socket(int* sock_fd,struct sockaddr_in* s)
 {
@@ -58,8 +52,7 @@ void initialize_socket(int* sock_fd,struct sockaddr_in* s)
 }
 
 
-
-
+//-----------------------------------------------------------------------------------------------------
 
 
 int get_memid()
@@ -99,8 +92,7 @@ Manage_request* get_shared_memory(int mem_id)
 		err_exit("shmget  ");
 	return p;
 }
-
-
+//-----------------------------------------------------------------------------------------------------
 
 void listen_request(int sockfd,Pkt_head* p,struct sockaddr_in* addr,socklen_t* len)
 {
@@ -117,8 +109,7 @@ void listen_request(int sockfd,Pkt_head* p,struct sockaddr_in* addr,socklen_t* l
     return;
 }
 
-
-
+//-----------------------------------------------------------------------------------------------------
 
 
 
@@ -318,7 +309,7 @@ void send_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in serva
 
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 
 
 
@@ -436,8 +427,7 @@ void get_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servad
 	free(w->win);
 	free(w);
 }
-
-
+//-----------------------------------------------------------------------------------------------------
 
 /***************************************************************
 Process tries receiving command 10 times; if no data 	       *
@@ -482,7 +472,7 @@ void manage_client(int sockfd,struct msgbuf msg)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 void get_semaphore(sem_t* sem)
 {
@@ -498,7 +488,7 @@ void release_semaphore(sem_t* sem)
 		err_exit("sem post");
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 
 /*************************************************************************************************
  * Child process waits on message queue; when father writes on queue, child executes		     *
@@ -566,7 +556,7 @@ void child_job(int qid,int sid,pid_t pid)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 
 void initialize_processes(int qid,int sid)
@@ -585,7 +575,7 @@ void initialize_processes(int qid,int sid)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 
 void write_on_queue(int qid,struct sockaddr_in s,Pkt_head p)
@@ -603,7 +593,7 @@ void write_on_queue(int qid,struct sockaddr_in s,Pkt_head p)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 
 void create_new_processes(int qid, int sid)
@@ -623,7 +613,7 @@ void create_new_processes(int qid, int sid)
 		}
 	}
 }
-
+//-----------------------------------------------------------------------------------------------------
 
 void update_list_file()
 {
@@ -661,9 +651,24 @@ void update_list_file()
 	}
 	close_file(fd);					/*lock is automatically released*/
 }
+//-----------------------------------------------------------------------------------------------------
+void saturation_dimWin(int *win){
+	if(DIMWIN<=0)
+		*win=80;
+	if(DIMWIN>93)
+		*win=93;
+	else
+		*win=DIMWIN;
+}
+void set_isAdaptive(int *adat){
+if(ADAPTATIVE!=1)
+	*adat=0;
+else
+	*adat=1;
+}
 
 
-
+//-----------------------------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
   (void) argc;
@@ -686,18 +691,11 @@ int main(int argc, char **argv)
   handle_sigchild(&sa);					
 
   //Dimensione della finestra-->viene settata di default in un range 80-93(valori ottimali a livello di prestazioni)
-  if(DIMWIN <= 0)
-	  n_win = 80;
-  if(DIMWIN > 93)
-	  n_win = 93;
-  else
-	  n_win = DIMWIN;
+  saturation_dimWin(&n_win);
 
   //Per vedere se il timeout impostato è adattativo o meno
-  if(ADAPTATIVE != 1)
-	  adaptive = 0;
-  else
-	  adaptive = 1;
+  set_isAdaptive(&adaptive);
+
   srand(time(NULL));
 
   /*

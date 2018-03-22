@@ -17,6 +17,7 @@ void err_exit(char* str)
     exit(EXIT_FAILURE);
 }
 
+//-----------------------------------------------------------------------------------------------------
 
 void clearScreen()
 {
@@ -28,6 +29,7 @@ void clearScreen()
   printf(">");
 }
 
+//-----------------------------------------------------------------------------------------------------
 int convert_in_int(char* str)
 {
 	int v;
@@ -40,9 +42,7 @@ int convert_in_int(char* str)
 	return v;
 }
 
-
-
-
+//-----------------------------------------------------------------------------------------------------
 int open_file(char* filename,int flags)
 {
 	int fd;
@@ -60,7 +60,7 @@ void close_file(int fd)
 		err_exit("closing file");
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 
 
 char* read_from_stdin()
@@ -81,8 +81,7 @@ char* read_from_stdin()
 	return line;
 }
 
-
-
+//-----------------------------------------------------------------------------------------------------
 off_t get_file_len(int fd)
 {
 	off_t len = lseek(fd,0,SEEK_END);		//get n. bytes file
@@ -95,7 +94,7 @@ off_t get_file_len(int fd)
 	return len;
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 
 int generate_casual()
 {
@@ -103,7 +102,7 @@ int generate_casual()
     return x;
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 void initialize_addr(struct sockaddr_in* s)
 {
 	 struct sockaddr_in addr = *s;
@@ -116,7 +115,7 @@ void initialize_addr(struct sockaddr_in* s)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 char* write_pathname(int len,const char*path,char*filename)
 {
@@ -139,9 +138,7 @@ char* write_pathname(int len,const char*path,char*filename)
 	return buffer;
 }
 
-
-
-
+//-----------------------------------------------------------------------------------------------------
 
 char* get_file_path(char* filename,const char* directory)
 {
@@ -152,10 +149,7 @@ char* get_file_path(char* filename,const char* directory)
 	return new_path;
 }
 
-
-
-
-
+//-----------------------------------------------------------------------------------------------------
 
 int existing_file(char* filename,const char* directory)
 {
@@ -165,8 +159,7 @@ int existing_file(char* filename,const char* directory)
 	return 1;
 }
 
-
-
+//-----------------------------------------------------------------------------------------------------
 int get_n_packets(off_t len)
 {
 	int n_packets;
@@ -177,10 +170,7 @@ int get_n_packets(off_t len)
 	return n_packets;
 }
 
-
-
-
-
+//-----------------------------------------------------------------------------------------------------
 off_t conv_in_off_t(char data[])
 {
 	off_t ret;
@@ -200,7 +190,7 @@ off_t conv_in_off_t(char data[])
 	return ret;
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 int read_file(char* buffer,int fd,int max_bytes)
 {
 	int r,tot = 0;
@@ -217,7 +207,7 @@ int read_file(char* buffer,int fd,int max_bytes)
 	}
 	return tot;
 }
-
+//-----------------------------------------------------------------------------------------------------
 
 void write_on_file(char buffer[],int fd, int n_bytes)
 {
@@ -236,9 +226,7 @@ void write_on_file(char buffer[],int fd, int n_bytes)
 	}
 }
 
-
-
-
+//-----------------------------------------------------------------------------------------------------
 
 int get_n_bytes(off_t len,int tot_read)
 {
@@ -252,7 +240,7 @@ int get_n_bytes(off_t len,int tot_read)
 	return n_bytes;
 }
 
-
+//-----------------------------------------------------------------------------------------------------
 void copy_data(char dest[],char* src, int n_bytes)
 {
 	int i,k=0;
@@ -261,7 +249,7 @@ void copy_data(char dest[],char* src, int n_bytes)
 		dest[k] = src[i];
 	}
 }
-
+//-----------------------------------------------------------------------------------------------------
 void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* directory)
 {
 	char* file_path = get_file_path(filename,directory);
@@ -269,7 +257,7 @@ void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* d
 	*len = get_file_len(*fd);
 	sprintf(p->data,"%zu",*len);
 }
-
+//-----------------------------------------------------------------------------------------------------
 //se servDir non esiste la creo nella cartella corrente del programma ed anche list_file.txt
 void initialize_fold(const char* directory) 
 {
@@ -282,6 +270,7 @@ void initialize_fold(const char* directory)
 	}
 	return;
 }
+//-----------------------------------------------------------------------------------------------------
 
 //scarica  file, se tutto bene ritorna 0 e il file è chiuso, senno -1; va passato l'ack attuale  della comunicazione
 int create_file(char* filename,const char* directory) 
@@ -307,7 +296,7 @@ int create_file(char* filename,const char* directory)
 }
 
 
-
+//-----------------------------------------------------------------------------------------------------
 
 int file_lock(int fd, int cmd)
 {
@@ -337,7 +326,6 @@ int locked_file(int fd)
 		return 0;
 	return 1;
 }
-
-
+//-----------------------------------------------------------------------------------------------------
 
 

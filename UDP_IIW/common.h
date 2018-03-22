@@ -38,5 +38,6 @@ void initialize_fold(const char* directory);
 int create_file(char* filename,const char* directory);
 int file_lock(int fd, int cmd);
 int locked_file(int fd);
+void clearScreen();
 
 #endif

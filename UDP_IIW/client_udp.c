@@ -503,7 +503,7 @@ int main(int argc, char *argv[]) {
 
 
 	  else{
-	  		fprintf(stderr, ANSI_COLOR_RED "command not recognize. USE COMMAND  LIST or GET/PUT FOLLOWEWD BY A PROPER FILE NAME \n" ANSI_COLOR_RESET);
+	  		fprintf(stderr, ANSI_COLOR_YELLOW "command not recognize. USE COMMAND  LIST or GET/PUT FOLLOWEWD BY A PROPER FILE NAME \n" ANSI_COLOR_RESET);
 	  		break;
 	  }
 
