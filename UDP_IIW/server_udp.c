@@ -113,7 +113,7 @@ void listen_request(int sockfd,Pkt_head* p,struct sockaddr_in* addr,socklen_t* l
 
 
 
-void send_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
+void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 {
 	int n_ack_received = 0,next_ack,i = 0;
 	int fd = -1;
@@ -464,7 +464,7 @@ void manage_client(int sockfd,struct msgbuf msg)
 
 	//get o list --> invio file
 	else if(  (strncmp(comm,"list",4) == 0) || (strncmp(comm,"get",3) == 0)  ){
-		send_file_server(comm,sockfd,r,msg.s);
+		send_file(comm,sockfd,r,msg.s);
 	}
 
 	printf("end request\n");
