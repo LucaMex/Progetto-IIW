@@ -315,7 +315,7 @@ void send_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in serva
 
 
 
-void get_file_server(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
+void put_command(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 {
 	int fd, i=0, n_pkt,start_seq,win_ind,expected_ack;
 	int existing = 0;
@@ -459,7 +459,7 @@ void manage_client(int sockfd,struct msgbuf msg)
 
     //se ho ricevuto una put prendo il file
 	if(strncmp(comm, "put", 3) == 0){
-		 get_file_server(comm,sockfd,r,msg.s);
+		 put_command(comm,sockfd,r,msg.s);
 	}
 
 	//get o list --> invio file
@@ -511,8 +511,10 @@ void child_job(int qid,int sid,pid_t pid)
 
 	while(n_req < 5){
 		//controllo se ho ricevuto messaggi sulla coda di messaggi
+
 		if(msgrcv(qid,&msg,	sizeof(struct sockaddr_in) + sizeof(int),1,0) == -1)
 			err_exit("msgrcv");
+
 		//prendo il semaforo
 		get_semaphore(&pr->sem);
 		//decremento i processi avviabili-->ho preso il semaforo
@@ -522,21 +524,24 @@ void child_job(int qid,int sid,pid_t pid)
 
 		//setto memoria della struct sockaddr_in a 0
 		memset((void *)&addr,0, sizeof(addr));
+
 		//riempo la struttura
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		
 		addr.sin_port = htons(0);
+		
 		//inizializzo socket
 		initialize_socket(&sockfd,&addr);
 
 		//all'interno del Pkt_head p metto come nseq -1 e come n_ack quello del client che mi ha contattato(il suo nseq)
 		p.n_seq = -1;
 		p.n_ack = msg.client_seq;
+
 		//invio sulla socket creata del figlio
 		//il valore 0 --> corrisponde all'ack delal connessione
 		if (sendto(sockfd, &p, sizeof(Pkt_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
 				err_exit("sendto");
+			
 		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
 		manage_client(sockfd,msg);		
 		//finito di gestire-->incremento nreq				
