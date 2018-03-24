@@ -323,6 +323,7 @@ void put_command(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	start_seq = p.n_seq;
 	//prendo il file descriptor
 	fd = create_file(comm+4,"./serverDir/");		
+	
 	if(fd == -1)
 		printf("file already in server directory");
 
@@ -457,7 +458,7 @@ void manage_client(int sockfd,struct msgbuf msg)
     	}
     }
 
-    //se ho ricevuto una put prendo il file
+    //se ho ricevuto una put sto ricevendo un file
 	if(strncmp(comm, "put", 3) == 0){
 		 put_command(comm,sockfd,r,msg.s);
 	}
@@ -541,7 +542,7 @@ void child_job(int qid,int sid,pid_t pid)
 		//il valore 0 --> corrisponde all'ack delal connessione
 		if (sendto(sockfd, &p, sizeof(Pkt_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
 				err_exit("sendto");
-			
+
 		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
 		manage_client(sockfd,msg);		
 		//finito di gestire-->incremento nreq				
