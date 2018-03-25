@@ -99,7 +99,7 @@ void listen_request(int sockfd,Pkt_head* p,struct sockaddr_in* addr,socklen_t* l
     struct sockaddr_in servaddr = *addr;
     socklen_t l = *len;
     l = sizeof(servaddr);
-    printf("listening request\n");
+    printf(ANSI_COLOR_GREEN "listening request\n" ANSI_COLOR_RESET);
 
     if((recvfrom(sockfd, p, sizeof(Pkt_head), 0, (struct sockaddr *)&servaddr, &l)) < 0)
          err_exit("recvfrom\n");
@@ -192,7 +192,7 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	//Se il client non risponde chiudo
 	if(!receive_ack(w,sockfd,servaddr,&recv_h,tmp + 1,'s',0)){
 		close_file(fd);
-		printf("not responding client; cannot start operation\n");
+		printf(ANSI_COLOR_YELLOW "not responding client; cannot start operation\n" ANSI_COLOR_RESET);
 		return;
 	}
 	//se exisisting =0 -->finisco
@@ -325,7 +325,7 @@ void put_command(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	fd = create_file(comm+4,"./serverDir/");		
 	
 	if(fd == -1)
-		printf("file already in server directory");
+		printf(ANSI_COLOR_YELLOW "file already in server directory" ANSI_COLOR_RESET);
 
 
 	/*server get a write lock for file; in this way, other client cannot get file before end
@@ -500,7 +500,7 @@ void release_semaphore(sem_t* sem)
 void child_job(int qid,int sid,pid_t pid)
 {
 
-	int n_req = 0;
+	int cont_request = 0;
 	(void)pid;
 	Pkt_head p;
 	struct sockaddr_in addr;
@@ -508,20 +508,20 @@ void child_job(int qid,int sid,pid_t pid)
 	struct msgbuf msg;
 
 	msg.mtype = 1;
-	Manage_request* pr = get_shared_memory(sid);
+	Manage_request* manager = get_shared_memory(sid);
 
-	while(n_req < 5){
+	while(cont_request < 5){
 		//controllo se ho ricevuto messaggi sulla coda di messaggi
 
 		if(msgrcv(qid,&msg,	sizeof(struct sockaddr_in) + sizeof(int),1,0) == -1)
 			err_exit("msgrcv");
 
 		//prendo il semaforo
-		get_semaphore(&pr->sem);
+		get_semaphore(&manager->sem);
 		//decremento i processi avviabili-->ho preso il semaforo
-		--(pr->n_avail);
+		--(manager->n_avail);
 		//rilascio il semaforo
-		release_semaphore(&pr->sem);
+		release_semaphore(&manager->sem);
 
 		//setto memoria della struct sockaddr_in a 0
 		memset((void *)&addr,0, sizeof(addr));
@@ -546,17 +546,17 @@ void child_job(int qid,int sid,pid_t pid)
 		//connessione effettuata-->posso gestire l'operazione richiesta che è specificata in msg
 		manage_client(sockfd,msg);		
 		//finito di gestire-->incremento nreq				
-		++n_req;
+		++cont_request;
 		//prendo il semaforo per aggiunarnare la variabile di processi ora avviabili
 			//ho finito il lavoro-->sono di nuovo avviabilie
-		get_semaphore(&pr->sem);
-		++(pr->n_avail);
-		release_semaphore(&pr->sem);
+		get_semaphore(&manager->sem);
+		++(manager->n_avail);
+		release_semaphore(&manager->sem);
 	}
 	//ho finito(ho fatto 5 richeiste)-->prendo semaforo e decremento processi disponibili
-	get_semaphore(&pr->sem);
-	--(pr->n_avail);
-	release_semaphore(&pr->sem);
+	get_semaphore(&manager->sem);
+	--(manager->n_avail);
+	release_semaphore(&manager->sem);
 
 	exit(EXIT_SUCCESS);
 }
@@ -568,10 +568,11 @@ void child_job(int qid,int sid,pid_t pid)
 void initialize_processes(int qid,int sid)
 {
 	//creo 10 figli e gli assegno i lavoro 
+	int num_child=10;
 	(void) sid;
 	pid_t pid;
 	int i;
-	for(i = 0; i < 10; i++){
+	for(i = 0; i < num_child; i++){
 		pid = fork();
 		if(pid == -1)
 			err_exit("fork");
@@ -611,10 +612,10 @@ void create_new_processes(int qid, int sid)
 		if(pid == -1)
 			err_exit("fork");
 		if(pid == 0){
-			Manage_request* pr = get_shared_memory(sid);
-			get_semaphore(&pr->sem);
-			++(pr->n_avail);
-			release_semaphore(&pr->sem);
+			Manage_request* manager = get_shared_memory(sid);
+			get_semaphore(&manager->sem);
+			++(manager->n_avail);
+			release_semaphore(&manager->sem);
 			child_job(qid,sid,getpid());
 		}
 	}
@@ -666,6 +667,7 @@ void saturation_dimWin(int *win){
 	else
 		*win=DIMWIN;
 }
+
 void set_isAdaptive(int *adat){
 if(ADAPTATIVE!=1)
 	*adat=0;
