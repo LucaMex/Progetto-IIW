@@ -714,18 +714,18 @@ int main(int argc, char **argv)
   //creo memoria condivisa-->prendo id memoria condivisa  
    
   sid = get_memid();
-  Manage_request* pr = get_shared_memory(sid);
+  Manage_request* manager = get_shared_memory(sid);
 
   /*
 	Inizializzo il semaforo contenuto nella struttura dati Manage_request
 		inizializzo valore ad 1 con int pshared =1 --> semaforo condiviso tra processi->deve stare all'interno
 			di una regione di memoria condivisa
   */
-  if(sem_init(&pr->sem,1,1) == -1)
+  if(sem_init(&manager->sem,1,1) == -1)
 	  err_exit("sem init");
 
   //numero iniziale di processi --> quanti processi creo
-  pr->n_avail = 10;						
+  manager->n_avail = 10;						
 
   initialize_processes(qid,sid);		//create processes and passing memory id and queue id
 
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 	  write_on_queue(qid,addr,p);					//write on queue message client data
 
 	  //se numero di processi è minore di 5-->creo altri 5 figli
-	  if(pr->n_avail <5)
+	  if(manager->n_avail <5)
 
 		create_new_processes(qid,sid);
   }
