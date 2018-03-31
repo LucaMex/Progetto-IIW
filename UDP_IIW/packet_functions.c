@@ -108,6 +108,7 @@ int receive_command(int sockfd,char comm[],Pkt_head* r,struct sockaddr* servaddr
     }
     else{
     	result = 1;
+    	//metto in comm il comando inserito dall'utente(sta dentro Pkt_head r -->data)
     	while(r->data[j] != '\0'){
     		comm[j] = r->data[j];
     		++j;

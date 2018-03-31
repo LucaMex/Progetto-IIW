@@ -23,7 +23,7 @@ void sighandler(int sign)
 	return;
 }
 
-void handle_sigchild(struct sigaction* sa)
+void dhandle_sigchild(struct sigaction* sa)
 {
 	//Riempio la struttura dati con i valori richiesti
 		//sighandler puntatore a funzione(==nome funzione)
@@ -380,6 +380,7 @@ void put_command(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	off_t len = conv_in_off_t(recv.data);
 	//invio ack
 	send_ack(sockfd,recv,servaddr,COMMAND_LOSS,recv.n_seq);
+	
 	//mi aspetto l'ack adesso successivo a quello del n_seq
 	expected_ack = recv.n_seq + 1;
 
@@ -439,7 +440,7 @@ void manage_client(int sockfd,struct msgbuf msg)
 {
 	Pkt_head r;
 	struct sockaddr_in servaddr;
-
+	//prendo il cmd inserito
     char comm[15];
 
     int attempts = 0,res;
@@ -499,17 +500,21 @@ void release_semaphore(sem_t* sem)
 
 void child_job(int qid,int sid,pid_t pid)
 {
-
+	//conto richieste gestite da ogni singolo figlio
 	int cont_request = 0;
+	
 	(void)pid;
+	
 	Pkt_head p;
+	
 	struct sockaddr_in addr;
 	int sockfd;
 	struct msgbuf msg;
 
 	msg.mtype = 1;
+	//prendo puntatore a memoria condivisa
 	Manage_request* manager = get_shared_memory(sid);
-
+	//se ho fatto meno di 5 richieste-->posso svolgerne altre
 	while(cont_request < 5){
 		//controllo se ho ricevuto messaggi sulla coda di messaggi
 
@@ -539,7 +544,7 @@ void child_job(int qid,int sid,pid_t pid)
 		p.n_ack = msg.client_seq;
 
 		//invio sulla socket creata del figlio
-		//il valore 0 --> corrisponde all'ack delal connessione
+		//il valore 0 --> corrisponde all'ack della connessione
 		if (sendto(sockfd, &p, sizeof(Pkt_head), 0, (struct sockaddr *)&msg.s, sizeof(msg.s)) < 0)			
 				err_exit("sendto");
 
@@ -684,7 +689,7 @@ int main(int argc, char **argv)
 
   //socket ascolto server
   int sockfd;
-  clearScreen();
+  clearScresen();
   int sid;
   //struttura dati per gestire informazioni client
   socklen_t len;
@@ -723,7 +728,7 @@ int main(int argc, char **argv)
 		inizializzo valore ad 1 con int pshared =1 --> semaforo condiviso tra processi->deve stare all'interno
 			di una regione di memoria condivisa
   */
-  if(sem_init(&manager->sem,1,1) == -1)
+  if(sem_insit(&manager->sem,1,1) == -1)
 	  err_exit("sem init");
 
   //numero iniziale di processi --> quanti processi creo

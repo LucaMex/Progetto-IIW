@@ -117,7 +117,7 @@ void initialize_addr(struct sockaddr_in* s)
 
 //-----------------------------------------------------------------------------------------------------
 
-char* write_pathname(int len,const char*path,char*filename)
+char*write_pathname(int len,const char*path,char*filename)
 {
 	char* buffer = malloc(len*sizeof(char));
 	if(buffer == NULL)
