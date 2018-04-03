@@ -1,2 +1,11 @@
+Strutture dati: 
+
 Header-->Pkt_head
 Process_data-->Manage_request
+
+Nomi Funzioni :
+
+
+get_file_server-->put_command (server_udp.c)
+send_file_server-->send_file (server_udp.c)
+

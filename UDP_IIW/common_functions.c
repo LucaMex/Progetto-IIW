@@ -246,7 +246,7 @@ void copy_data(char dest[],char* src, int n_bytes)
 	}
 }
 
-void write_file_len(off_t* len,int* fd,Header* p, char* filename,const char* directory)
+void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* directory)
 {
 	char* file_path = get_file_path(filename,directory);
 	*fd = open_file(file_path,O_RDONLY);

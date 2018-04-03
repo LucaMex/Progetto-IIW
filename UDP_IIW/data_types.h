@@ -1,11 +1,11 @@
-s#ifndef DATA_TYPES_H_
+#ifndef DATA_TYPES_H_
 #define DATA_TYPES_H_
 
 
 #define MAXLINE 1460
 #include <sys/types.h>
 #include <sys/socket.h>
- #include <netinet/in.h>
+#include <netinet/in.h>
 #include <semaphore.h>
 #include <pthread.h>
 
@@ -14,7 +14,7 @@ s#ifndef DATA_TYPES_H_
 typedef struct{
 	sem_t sem;
 	int n_avail;
-}Process_data;
+}Manage_request;
 
 
 typedef struct{

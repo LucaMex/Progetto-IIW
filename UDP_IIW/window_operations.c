@@ -12,18 +12,25 @@ void initialize_window(Window** w,char c)
 	Window* window;
 	int flag;
 	if(c == 's')
+		//flag=-2 indica che la finestra usata per ricevere -->pkt vuoto posso inserire dati
+														//dopo inseriti viene messo a 0 e dopo inviat ia 2 
 		flag = -2;
 	else
+		//sto in ricezione-->1 pkt vuoto, 0 pieno
 		flag = 1;
+
 	window = malloc(sizeof(Window));
 	if(window == NULL)
 		err_exit("malloc");
-	window->win = malloc((n_win+1)*sizeof(Header));
+	//alloco memoria per la struttura dati pkt_head in window(ne alloco tanta quante la finestra-->ogni "slot" un pkthead)
+	window->win = malloc((n_win+1)*sizeof(Pkt_head));
 	if(window->win == NULL)
 		err_exit("malloc");
+	//setto il buffer ciroclare come vuoto
 	window->E = window->S = window->end = 0;
 	int j;
 	for(j = 0; j < n_win+1; j++)
+		//setto tutti i flag dei pacchetti con 1
 		window->win[j].flag= flag;
 	*w = window;
 }
@@ -75,9 +82,10 @@ void check_window(Window* w,int n_ack,int sockfd,struct sockaddr_in servaddr)
 	for(j = w->S; j!= n_ack;){
 		if(w->win[j].flag == 1){
 
+			//scatta il timer-->rifaccio ripartire il timer -->rinvio pacchetto
 			if(expired_timeout(time_actual,w->win[j].tstart)){
-				start_timer(&(w->win[j].tstart));					/*restart timer*/
-				send_packet(sockfd,servaddr,&(w->win[j]),COMMAND_LOSS);			/*resend packet*/
+				start_timer(&(w->win[j].tstart));					
+				send_packet(sockfd,servaddr,&(w->win[j]),COMMAND_LOSS);		
 			}
 		}
 		j = (j+1)%(n_win + 1);
@@ -88,10 +96,12 @@ void check_window(Window* w,int n_ack,int sockfd,struct sockaddr_in servaddr)
 
 void insert_in_window(Window*w, char data[],int first_seq,int n_bytes)
 {
+	//inserisco nella finestra settando anche dati e timeout
 	w->win[w->E].n_seq = first_seq;
 	copy_data(w->win[w->E].data,data,n_bytes);
 	set_timeout(&(w->win[w->E].tstart));
 	start_timer(&(w->win[w->E].tstart));
+	//inviato-->flag 1
 	w->win[w->E].flag = 1;
 
 }
@@ -105,24 +115,27 @@ void read_and_insert(Window* w,off_t len,int* tot_read,int fd,int seq)
 	char* buffer = malloc(MAXLINE*sizeof(char));
 	if(buffer == NULL)
 		err_exit("malloc");
+
 	int n_bytes = get_n_bytes(len,*tot_read);
+	
 	int r = read_file(buffer,fd,n_bytes);
+	//aggiorno quanti ne no letti
 	*tot_read = *tot_read + r;
+	//inserisco nella finestra
 	insert_in_window(w,buffer,seq,n_bytes);
 	free(buffer);
 }
 
 
 
-/********************************************************************************************
- * get size to read from file and copy data in window; then, packet flag is setted to 0, to *
- * indicates packet is buffered.															*
- ********************************************************************************************/
-void buffering_packet(Window* w,int win_ind,off_t len,int size,Header p,int* tot_read)
+void buffering_packet(Window* w,int win_ind,off_t len,int size,Pkt_head p,int* tot_read)
 {
+	//prendo la dimensione dei byte da buff
 	int n_bytes = get_n_bytes(len,size);
 	copy_data(w->win[win_ind].data,p.data,n_bytes);
 	*tot_read = *tot_read + n_bytes;
+
+	//metto flag a 0 che indica che è stato bufferizzato il pkt
 	w->win[win_ind].flag = 0;
 	w->win[win_ind].n_seq = p.n_seq;
 
@@ -138,7 +151,7 @@ void save_packet(Window* w,int fd,off_t len, int* tot_write)
 
 
 
-void set_existing(Header* p)
+void set_existing(Pkt_head* p)
 {
 	int x;
 	for(x = 0; x < MAXLINE; x++)

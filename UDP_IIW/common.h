@@ -1,6 +1,14 @@
 #ifndef COMMON_H_H_
 #define COMMON_H_H_
 
+//color
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
 
 
 
@@ -25,10 +33,11 @@ int read_file(char* buffer,int fd,int max_bytes);
 void write_on_file(char buffer[],int fd, int n_bytes);
 int get_n_bytes(off_t len,int tot_read);
 void copy_data(char dest[],char* src, int n_bytes);
-void write_file_len(off_t* len,int* fd,Header* p, char* filename,const char* directory);
+void write_file_len(off_t* len,int* fd,Pkt_head* p, char* filename,const char* directory);
 void initialize_fold(const char* directory);
 int create_file(char* filename,const char* directory);
 int file_lock(int fd, int cmd);
 int locked_file(int fd);
+void clearScreen();
 
 #endif
