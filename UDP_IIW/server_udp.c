@@ -117,13 +117,17 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 {
 	int n_ack_received = 0,next_ack,i = 0;
 	int fd = -1;
+	
 	struct thread_data td;
 	int end_seq = 0,win_ind,start_seq = p.n_seq;
+	
 	Pkt_head recv_h;
 	Window* w = NULL;
 	struct timespec arrived;
+	
 	//inizializzo la finestra con flag s
 	initialize_window(&w,'s');
+	
 	//setto con la sequenza inziale 
 	w->win[w->E].n_ack = start_seq;
 
@@ -142,6 +146,7 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	}
 	//ricevuto-->pkt pieno
 	w->win[w->S].flag = 2;
+	
 	//sposto finestra 
 	increase_window(w);
 
@@ -158,12 +163,12 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 		else{
 			char* new_path = get_file_path(comm+4,"./serverDir/");
 			fd = open_file(new_path,O_RDONLY);
-			//prendo il lock sul file
+			//se file è locked			
 			if(locked_file(fd))
 				existing = 0;
 		}
 
-	}
+	
 
 
 	else{
@@ -180,10 +185,11 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 		sprintf(p.data,"%zu",len);
 	}
 	else
-		//se il file è gia in   lock--->ho messo existing =0(oppure non esiste)-->server invia '\0' in prima posizione
+		//se il file è gia in  lock--->ho messo existing =0(oppure non esiste)-->server invia '\0' in prima posizione
 		p.data[0] = '\0';					
 
 	insert_in_window(w,p.data,tmp + 1,strlen(p.data));
+	
 	//invio dim del pkt
 	send_packet(sockfd,servaddr,&(w->win[w->E]),COMMAND_LOSS);			
 	//sposto E del buffer circolare 
@@ -210,7 +216,7 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 	for(i = 0; i < n_win; i++){
 
 		read_and_insert(w,len,&tot_read,fd,start_seq + i + 2);
-		//aggiorno end seq inbase alla seq che sono riuscito ad inviare
+		//aggiorno end seq in base alla seq che sono riuscito ad inviare
 		end_seq = w->win[w->E].n_seq + 1;
 		//invio pkt-->sempre con prob% di perdita
 		send_packet(sockfd,servaddr,&(w->win[w->E]),PACKET_LOSS);
@@ -223,6 +229,7 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 
 	//faccio partire un thread per la gestione dei pkt da ritrasmettere 
 	start_thread(td,servaddr,sockfd,w);
+	
 	//ack successivo che mi aspetto				
 	next_ack = w->win[w->S].n_seq;
 

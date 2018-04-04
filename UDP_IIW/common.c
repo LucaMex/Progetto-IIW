@@ -84,7 +84,8 @@ char* read_from_stdin()
 //-----------------------------------------------------------------------------------------------------
 off_t get_file_len(int fd)
 {
-	off_t len = lseek(fd,0,SEEK_END);		//get n. bytes file
+	off_t len = lseek(fd,0,SEEK_END);
+	//cesati's school 		//get n. bytes file
 	if(len == -1)
 		err_exit("lseek");
 
