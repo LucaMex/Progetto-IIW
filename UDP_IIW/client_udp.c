@@ -1,5 +1,5 @@
 #include "configurations.h"
-#include "basic.h"
+#include "basic.h" // contiene gli #include delle librerie, # di finestre, MAXLINE e SERVPORT
 #include "data_types.h"
 #include "common.h"
 #include "thread_functions.h"
@@ -80,6 +80,7 @@ int request_to_server(int sockfd,Pkt_head* x,struct sockaddr_in* addr)
     			if(attempts == 3)
     				break;
     			conn_time.tv_sec += conn_time.tv_sec;
+    			conn_time.tv_sec *= 2; //double the timer
     		}
     		else
     			err_exit("recvfrom");
@@ -96,6 +97,7 @@ int request_to_server(int sockfd,Pkt_head* x,struct sockaddr_in* addr)
     }
 
     return 0;					/*not available server*/
+    return 0;					/*server not available*/
 }
 
 
@@ -451,7 +453,7 @@ int main(int argc, char *argv[]) {
 
   while(feof(stdin) == 0){
 	  //ssize_t len_line;
-	  char comm[5];
+	  char command[5];
 
 
 	  printf("write command\n");
@@ -484,32 +486,30 @@ int main(int argc, char *argv[]) {
 		  exit(EXIT_SUCCESS);
 	  }
 
-	  strncpy(comm, line, 4);
-	  comm[strlen(comm)] = '\0';
+	  strncpy(command, line, 4);
+	  command[strlen(command)] = '\0';
 
-	  if(strncmp(comm, "put", 3) == 0){
+	  if(strncmp(command, "put", 3) == 0){
 		  if(!existing_file(line+4,"./clientDir/")){
-			  printf("not existing file\n");
+			  printf("Not existing file\n");
 			  break;
 		  }
 		  send_file_client(sockfd,line,p,servaddr);
 		  break;
 	  }
 
-	  else if((strncmp(comm,"get",3) == 0) || (strncmp(comm,"list",4) == 0)){
+	  else if((strncmp(command,"get",3) == 0) || (strncmp(command,"list",4) == 0)){
 		  get_file_client(sockfd,line,p,servaddr);
 		  break;
 	  }
-
 
 	  else{
 	  		fprintf(stderr, ANSI_COLOR_YELLOW "command not recognize. USE COMMAND  LIST or GET/PUT FOLLOWEWD BY A PROPER FILE NAME \n" ANSI_COLOR_RESET);
 	  		break;
 	  }
 
+    } 
+    printf("closing connection\n");
 
-      }
-      printf("closing connection\n");
-
-      exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
