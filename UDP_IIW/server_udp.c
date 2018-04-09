@@ -23,7 +23,7 @@ void sighandler(int sign)
 	return;
 }
 
-void dhandle_sigchild(struct sigaction* sa)
+void handle_sigchild(struct sigaction* sa)
 {
 	//Riempio la struttura dati con i valori richiesti
 		//sighandler puntatore a funzione(==nome funzione)
@@ -167,6 +167,7 @@ void send_file(char comm[],int sockfd,Pkt_head p,struct sockaddr_in servaddr)
 			if(locked_file(fd))
 				existing = 0;
 		}
+	}
 
 	
 
@@ -696,7 +697,7 @@ int main(int argc, char **argv)
 
   //socket ascolto server
   int sockfd;
-  clearScresen();
+  clearScreen();
   int sid;
   //struttura dati per gestire informazioni client
   socklen_t len;
@@ -735,7 +736,7 @@ int main(int argc, char **argv)
 		inizializzo valore ad 1 con int pshared =1 --> semaforo condiviso tra processi->deve stare all'interno
 			di una regione di memoria condivisa
   */
-  if(sem_insit(&manager->sem,1,1) == -1)
+  if(sem_init(&manager->sem,1,1) == -1)
 	  err_exit("sem init");
 
   //numero iniziale di processi --> quanti processi creo
